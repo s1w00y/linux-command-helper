@@ -1,119 +1,203 @@
 import streamlit as st
+from data import commands
 
-st.title("🐧 Linux命令速查助手")
+# 页面配置
+st.set_page_config(
+    page_title="Linux命令速查助手",
+    page_icon="🐧",
+    layout="wide"
+)
+
+# 自定义CSS
+st.markdown(
+    """
+    <style>
+    .main {
+        background-color: #0e1117;
+    }
+
+    .title {
+        font-size: 42px;
+        font-weight: bold;
+        color: #60a5fa;
+        margin-bottom: 10px;
+    }
+
+    .subtitle {
+        font-size: 18px;
+        color: #9ca3af;
+        margin-bottom: 30px;
+    }
+
+    .card {
+        background-color: #1f2937;
+        padding: 20px;
+        border-radius: 18px;
+        margin-bottom: 18px;
+        border: 1px solid #374151;
+        transition: 0.2s;
+    }
+
+    .card:hover {
+        border: 1px solid #60a5fa;
+        transform: scale(1.01);
+    }
+
+    .command-name {
+        font-size: 24px;
+        font-weight: bold;
+        color: #60a5fa;
+    }
+
+    .command-desc {
+        font-size: 16px;
+        color: #d1d5db;
+        margin-top: 8px;
+    }
+
+    .usage {
+        background-color: #111827;
+        padding: 12px;
+        border-radius: 10px;
+        color: #34d399;
+        font-family: monospace;
+        margin-top: 12px;
+    }
+
+    .stats {
+        background-color: #111827;
+        color:white;
+        padding: 15px;
+        border-radius: 15px;
+        text-align: center;
+        border: 1px solid #374151;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+# 标题
+st.markdown('<div class="title">🐧 Linux命令速查助手</div>', unsafe_allow_html=True)
+
+st.markdown(
+    '<div class="subtitle">适合Linux / 生信初学者的命令查询工具</div>',
+    unsafe_allow_html=True
+)
+
+# 侧边栏
+st.sidebar.title("⚙️ 功能区")
+
 category = st.sidebar.selectbox(
     "选择分类",
     ["全部", "Linux命令", "生信命令"]
 )
 
-commands = {
-    "删除文件": {
-        "cmd": "rm file.txt",
-        "desc": "删除指定文件",
-        "example": "rm result.txt",
-        "category": "Linux命令"
-    },
+search = st.sidebar.text_input("🔍 搜索命令")
 
-    "复制文件": {
-        "cmd": "cp source.txt target.txt",
-        "desc": "复制文件到新的位置",
-        "example": "cp data.txt backup.txt",
-        "category": "Linux命令"
-    },
-    "移动文件": {
-    "cmd": "mv old.txt new.txt",
-    "desc": "移动或重命名文件",
-    "example": "mv data.txt backup/data.txt",
-    "category": "Linux命令"
-},
-    "查看目录": {
-    "cmd": "ls -l",
-    "desc": "列出当前目录所有文件和详细信息",
-    "example":"ls -lh",
-    "category": "Linux命令"
-},
-    "查看当前路径": {
-    "cmd": "pwd",
-    "desc": "显示当前所在目录",
-    "example": "pwd",
-    "category": "Linux命令"
-},
-    "查找文件": {
-    "cmd": "find . -name '*.txt'",
-    "desc": "递归搜索txt文件",
-    "example": "find . -name '*.vcf.gz'",
-    "category": "Linux命令"
-},
-    "查看目录大小": {
-    "cmd": "du -sh *",
-    "desc": "查看每个文件夹占用空间",
-    "example": "du -sh results/",
-    "category": "Linux命令"
-},
-    "创建目录": {
-    "cmd": "mkdir myfolder",
-    "desc": "创建新目录",
-    "example": "mkdir project_data",
-    "category": "Linux命令"
-},
-    "查看VCF头部": {
-    "cmd": "bcftools view file.vcf.gz | head",
-    "desc": "查看VCF文件前几行",
-    "example": "bcftools view horse.vcf.gz | head",
-    "category": "生信命令"
-},
-    "统计VCF样本数": {
-    "cmd": "bcftools query -l file.vcf.gz | wc -l",
-    "desc": "统计VCF中的样本数量",
-    "example": "bcftools query -l horse.vcf.gz | wc -l",
-    "category": "生信命令"
-},
-    "统计FASTA信息": {
-    "cmd": "seqkit stats genome.fa",
-    "desc": "统计序列数、长度和GC含量",
-    "example": "seqkit stats horse.fa",
-    "category": "生信命令"
-}
-}
-st.sidebar.write(
-    f"当前收录 {len(commands)} 条命令"
+# 数据统计
+st.sidebar.markdown("---")
+st.sidebar.markdown("### 📊 数据统计")
+
+st.sidebar.write(f"当前收录命令：{len(commands)}")
+
+linux_count = sum(
+    1 for cmd in commands
+    if cmd["category"] == "Linux命令"
 )
 
-question = st.text_input("你想做什么？")
-
-if question != "":
-
-    found = False
-
-    for key in commands:
-
-        if category != "全部":
-
-             if commands[key]["category"] != category:
-                 continue
-
-        if question in key:
-
-            found = True
-
-            st.success(key)
-
-            st.code(
-                commands[key]["cmd"],
-                language="bash"
-            )
-            st.write("说明：")
-            st.write(
-                commands[key]["desc"]
-            )
-            st.write("示例：")
-            st.code(
-    commands[key]["example"],
-    language="bash"
+bio_count = sum(
+    1 for cmd in commands
+    if cmd["category"] == "生信命令"
 )
 
-    if not found:
+st.sidebar.write(f"Linux命令：{linux_count}")
+st.sidebar.write(f"生信命令：{bio_count}")
 
-        st.warning(
-            "暂时没有收录这个命令"
+# 数据过滤
+filtered_commands = []
+
+if search:
+
+    for cmd in commands:
+
+        match_category = (
+            category == "全部"
+            or cmd["category"] == category
         )
+
+        match_search = (
+            search.lower() in cmd["name"].lower()
+            or search.lower() in cmd["desc"].lower()
+        )
+
+        if match_category and match_search:
+            filtered_commands.append(cmd)
+
+# 顶部统计栏
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.markdown(
+        f'''
+        <div class="stats">
+        <h2>{len(filtered_commands)}</h2>
+        <p>当前结果</p>
+        </div>
+        ''',
+        unsafe_allow_html=True
+    )
+
+with col2:
+    st.markdown(
+        '''
+        <div class="stats">
+        <h2>🐧</h2>
+        <p>Linux学习</p>
+        </div>
+        ''',
+        unsafe_allow_html=True
+    )
+
+with col3:
+    st.markdown(
+        '''
+        <div class="stats">
+        <h2>🧬</h2>
+        <p>生信工具</p>
+        </div>
+        ''',
+        unsafe_allow_html=True
+    )
+
+st.markdown("---")
+if not search:
+    st.info("👈 请在左侧搜索框输入命令")
+
+# 命令卡片
+for cmd in filtered_commands:
+
+    st.markdown(
+        f'''
+        <div class="card">
+
+            <div class="command-name">
+                {cmd["name"]}
+            </div>
+
+            <div class="command-desc">
+                {cmd["desc"]}
+            </div>
+
+            <div class="usage">
+                {cmd["usage"]}
+            </div>
+
+        </div>
+        ''',
+        unsafe_allow_html=True
+    )
+
+# 无结果提示
+if search and len(filtered_commands) == 0:
+    st.warning("没有找到匹配的命令")
