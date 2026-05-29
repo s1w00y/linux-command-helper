@@ -9,6 +9,13 @@ st.set_page_config(
 )
 
 # 自定义CSS
+import random
+
+random_cmd = random.choice(commands)
+
+st.info(
+    f"📌 今日推荐命令：{random_cmd['name']} → {random_cmd['desc']}"
+)
 st.markdown(
     """
     <style>
@@ -25,7 +32,7 @@ st.markdown(
 
     .subtitle {
         font-size: 18px;
-        color: #9ca3af;
+        color: #d1d5db;
         margin-bottom: 30px;
     }
 
@@ -36,6 +43,7 @@ st.markdown(
         margin-bottom: 18px;
         border: 1px solid #374151;
         transition: 0.2s;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
 
     .card:hover {
@@ -65,12 +73,22 @@ st.markdown(
     }
 
     .stats {
-        background-color: #111827;
-        color:white;
-        padding: 15px;
-        border-radius: 15px;
-        text-align: center;
-        border: 1px solid #374151;
+     background-color: #1f2937;
+     color: #f9fafb;
+     padding: 15px;
+     border-radius: 15px;
+     text-align: center;
+     border: 1px solid #4b5563;
+    }
+    
+    .stats h2 {
+        color: #60a5fa;
+        margin-bottom: 8px;
+    }
+
+    .stats p {
+        color: #e5e7eb;
+        font-size: 16px;
     }
     </style>
     """,
@@ -88,9 +106,13 @@ st.markdown(
 # 侧边栏
 st.sidebar.title("⚙️ 功能区")
 
+categories = ["全部"] + sorted(
+    list(set(cmd["category"] for cmd in commands))
+)
+
 category = st.sidebar.selectbox(
     "选择分类",
-    ["全部", "Linux命令", "生信命令"]
+    categories
 )
 
 search = st.sidebar.text_input("🔍 搜索命令")
@@ -101,39 +123,37 @@ st.sidebar.markdown("### 📊 数据统计")
 
 st.sidebar.write(f"当前收录命令：{len(commands)}")
 
-linux_count = sum(
-    1 for cmd in commands
-    if cmd["category"] == "Linux命令"
-)
+category_counts = {}
 
-bio_count = sum(
-    1 for cmd in commands
-    if cmd["category"] == "生信命令"
-)
+for cmd in commands:
 
-st.sidebar.write(f"Linux命令：{linux_count}")
-st.sidebar.write(f"生信命令：{bio_count}")
+    cat = cmd["category"]
+
+    if cat not in category_counts:
+        category_counts[cat] = 0
+
+    category_counts[cat] += 1
+
+for cat, count in category_counts.items():
+    st.sidebar.write(f"{cat}：{count}")
 
 # 数据过滤
 filtered_commands = []
 
-if search:
+for cmd in commands:
 
-    for cmd in commands:
+    match_category = (
+        category == "全部"
+        or cmd["category"] == category
+    )
 
-        match_category = (
-            category == "全部"
-            or cmd["category"] == category
-        )
+    match_search = (
+        search.lower() in cmd["name"].lower()
+        or search.lower() in cmd["desc"].lower()
+    )
 
-        match_search = (
-            search.lower() in cmd["name"].lower()
-            or search.lower() in cmd["desc"].lower()
-        )
-
-        if match_category and match_search:
-            filtered_commands.append(cmd)
-
+    if match_category and match_search:
+        filtered_commands.append(cmd)
 # 顶部统计栏
 col1, col2, col3 = st.columns(3)
 
@@ -171,32 +191,35 @@ with col3:
     )
 
 st.markdown("---")
-if not search:
-    st.info("👈 请在左侧搜索框输入命令")
+st.info("💡 可以使用左侧分类或搜索框快速查找命令")
 
 # 命令卡片
 for cmd in filtered_commands:
 
-    st.markdown(
-        f'''
-        <div class="card">
+    with st.container():
 
-            <div class="command-name">
-                {cmd["name"]}
-            </div>
+        st.subheader(f"🐧 {cmd['name']}")
 
-            <div class="command-desc">
-                {cmd["desc"]}
-            </div>
+        st.write(f"📂 分类：{cmd['category']}")
 
-            <div class="usage">
-                {cmd["usage"]}
-            </div>
+        st.write(f"📝 说明：{cmd['desc']}")
 
-        </div>
-        ''',
-        unsafe_allow_html=True
-    )
+        st.code(
+            cmd.get("example", "暂无示例"),
+            language="bash"
+        )
+
+        # 风险等级
+        if cmd["danger"] == "高":
+            st.error("⚠️ 高风险命令")
+
+        elif cmd["danger"] == "中":
+            st.warning("⚠️ 中风险命令")
+
+        else:
+            st.success("✅ 安全命令")
+
+        st.divider()
 
 # 无结果提示
 if search and len(filtered_commands) == 0:
