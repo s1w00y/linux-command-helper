@@ -102,10 +102,22 @@ st.markdown(
     '<div class="subtitle">适合Linux / 生信初学者的命令查询工具</div>',
     unsafe_allow_html=True
 )
-
+# 初始化搜索历史
+if "history" not in st.session_state:
+    st.session_state.history = []
 # 侧边栏
 st.sidebar.title("⚙️ 功能区")
+st.sidebar.markdown("---")
+st.sidebar.markdown("### 🤖 AI助手")
 
+question = st.sidebar.text_input(
+    "描述你的需求"
+)
+st.sidebar.markdown("---")
+st.sidebar.markdown("### 🕒 最近搜索")
+
+for item in st.session_state.history:
+    st.sidebar.write(f"• {item}")
 categories = ["全部"] + sorted(
     list(set(cmd["category"] for cmd in commands))
 )
@@ -116,7 +128,48 @@ category = st.sidebar.selectbox(
 )
 
 search = st.sidebar.text_input("🔍 搜索命令")
+recommended = None
 
+if question:
+
+    best_score = 0
+
+    for cmd in commands:
+
+        score = 0
+
+        for tag in cmd.get("tags", []):
+
+            if tag in question:
+                score += 1
+
+        if score > best_score:
+            best_score = score
+            recommended = cmd
+if search and len(search) >= 2:
+
+    if search not in st.session_state.history:
+
+        st.session_state.history.insert(0, search)
+
+        st.session_state.history = st.session_state.history[:5]
+st.sidebar.markdown("---")
+st.sidebar.markdown("### 🎯 Linux学习路线")
+
+roadmap = [
+    "pwd",
+    "ls",
+    "cd",
+    "mkdir",
+    "cp",
+    "mv",
+    "cat",
+    "grep",
+    "find"
+]
+
+for cmd in roadmap:
+    st.sidebar.write(f"✅ {cmd}")
 # 数据统计
 st.sidebar.markdown("---")
 st.sidebar.markdown("### 📊 数据统计")
@@ -140,20 +193,25 @@ for cat, count in category_counts.items():
 # 数据过滤
 filtered_commands = []
 
-for cmd in commands:
+if recommended:
+    filtered_commands.append(recommended)
 
-    match_category = (
-        category == "全部"
-        or cmd["category"] == category
-    )
+else:
 
-    match_search = (
-        search.lower() in cmd["name"].lower()
-        or search.lower() in cmd["desc"].lower()
-    )
+    for cmd in commands:
 
-    if match_category and match_search:
-        filtered_commands.append(cmd)
+        match_category = (
+            category == "全部"
+            or cmd["category"] == category
+        )
+
+        match_search = (
+            search.lower() in cmd["name"].lower()
+            or search.lower() in cmd["desc"].lower()
+        )
+
+        if match_category and match_search:
+            filtered_commands.append(cmd)
 # 顶部统计栏
 col1, col2, col3 = st.columns(3)
 
@@ -192,7 +250,15 @@ with col3:
 
 st.markdown("---")
 st.info("💡 可以使用左侧分类或搜索框快速查找命令")
+if recommended:
 
+    st.success(
+        f"🤖 AI推荐命令：{recommended['name']}"
+    )
+if question and not recommended:
+    st.warning(
+        "🤖 暂时没有找到合适的命令，请尝试换一种描述方式"
+    )
 # 命令卡片
 for cmd in filtered_commands:
 
@@ -203,6 +269,13 @@ for cmd in filtered_commands:
         st.write(f"📂 分类：{cmd['category']}")
 
         st.write(f"📝 说明：{cmd['desc']}")
+
+        st.write(f"📈 难度：{cmd.get('level', '⭐')}")
+
+        st.write(
+           "🏷️ 标签：" +
+           ", ".join(cmd.get("tags", []))
+        )
 
         st.code(
             cmd.get("example", "暂无示例"),
