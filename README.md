@@ -2,6 +2,12 @@
 
 一个基于 Streamlit 开发的 Linux 命令速查助手。
 
+## 在线体验
+
+点击访问：
+
+[Linux Command Helper]https://linux-command-apper-ststjst.streamlit.app/
+
 ## 功能
 
 - Linux命令搜索
